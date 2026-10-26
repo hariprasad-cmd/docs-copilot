@@ -1,0 +1,17 @@
+[
+  {"question": "When is my monthly bill due?", "expected_source": "billing.md", "expected": "The 15th of the month (bill is generated on the 1st)."},
+  {"question": "Will I be charged extra if I pay a few days late?", "expected_source": "billing.md", "expected": "There is a 5-day grace period; a $10 late fee applies if still unpaid on the 20th."},
+  {"question": "How much do I save with autopay?", "expected_source": "billing.md", "expected": "$5 off every monthly bill."},
+  {"question": "Can I pay my bill in cash at a store?", "expected_source": "billing.md", "expected": "No. Cash, cheques and in-store payments are not accepted; pay by card, ACH or PayPal."},
+  {"question": "How fast is the Plus plan and what does it cost?", "expected_source": "plans.md", "expected": "500 Mbps download / 50 Mbps upload for $60 per month."},
+  {"question": "If I downgrade my plan, when does it change?", "expected_source": "plans.md", "expected": "At the start of the next billing cycle."},
+  {"question": "Is professional installation free on the Gig plan?", "expected_source": "installation.md", "expected": "Yes, the $99 professional installation fee is waived on the Gig plan."},
+  {"question": "My router light is blinking amber. What does that mean?", "expected_source": "troubleshooting.md", "expected": "No signal from the Brightwave network; check the cable and the outage map."},
+  {"question": "My internet was out for 2 days because of an outage. Do I get anything back?", "expected_source": "troubleshooting.md", "expected": "Yes, a credit for each full day without service (2 days), added automatically to the next bill."},
+  {"question": "What happens if I don't send the router back after cancelling?", "expected_source": "cancellation.md", "expected": "A $150 unreturned equipment fee if not returned within 30 days."},
+  {"question": "Do I have to pay a fee to cancel?", "expected_source": "cancellation.md", "expected": "Only 12-month price-lock customers pay an early termination fee: $150 minus $12.50 per completed month. Monthly customers pay none."},
+  {"question": "How do I set up a PIN for phone support?", "expected_source": "account-security.md", "expected": "In the app under Account > Security > Support PIN."},
+  {"question": "Do you have cable TV packages?", "expected_source": "plans.md", "expected": "No, Brightwave only offers home internet - no cable TV, phone or mobile plans."},
+  {"question": "What is the weather in Chennai today?", "expected_source": null, "expected": "OUT_OF_SCOPE: the assistant should say it doesn't have that information."},
+  {"question": "Can you give me a discount code for 50% off?", "expected_source": null, "expected": "OUT_OF_SCOPE: no discount codes are in the docs; the assistant should not invent one."}
+]

@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs Copilot</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --surface-2: #f1f3f8;
+    --text: #12141a;
+    --muted: #646b7a;
+    --faint: #9aa1ae;
+    --border: #e4e7ee;
+    --accent: #5b5bf0;
+    --accent-2: #8b5cf6;
+    --accent-soft: #ecebff;
+    --accent-text: #4141c9;
+    --user-bubble: #5b5bf0;
+    --user-text: #ffffff;
+    --ok: #16a34a;
+    --danger: #dc2626;
+    --danger-soft: #fdecec;
+    --shadow: 0 1px 2px rgba(16, 20, 40, 0.04), 0 8px 24px rgba(16, 20, 40, 0.06);
+    --radius: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f14;
+      --surface: #151820;
+      --surface-2: #1c2029;
+      --text: #eceef3;
+      --muted: #a0a7b5;
+      --faint: #6b7280;
+      --border: #262b36;
+      --accent: #7c7cff;
+      --accent-2: #a78bfa;
+      --accent-soft: #23234a;
+      --accent-text: #b4b4ff;
+      --user-bubble: #4f4fe0;
+      --user-text: #ffffff;
+      --ok: #22c55e;
+      --danger: #f87171;
+      --danger-soft: #3a1a1d;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  svg { display: block; }
+
+  /* ---------- Header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    width: 34px; height: 34px; border-radius: 10px; flex: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; color: #fff;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .brand { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+  .brand b { font-size: 15px; letter-spacing: -0.01em; }
+  .brand span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .spacer { flex: 1; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 13px; color: var(--muted); white-space: nowrap;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 20%, transparent); }
+  .ws input {
+    border: 0; background: transparent; outline: none; width: 96px;
+    color: var(--text); font-weight: 500; font-size: 13px;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn:hover { background: var(--surface-2); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+
+  /* ---------- Chat area ---------- */
+  #scroller { flex: 1; overflow-y: auto; }
+  .column { max-width: 800px; margin: 0 auto; padding: 24px 20px 32px; }
+
+  .empty { text-align: center; padding: 8vh 0 24px; }
+  .empty .logo { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 18px; }
+  .empty h1 { font-size: 28px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .empty p { color: var(--muted); margin: 0 auto 28px; max-width: 460px; }
+  .suggestions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+  .suggestion {
+    text-align: left; padding: 14px 16px; border-radius: 14px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface);
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .suggestion:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); box-shadow: var(--shadow); }
+  .suggestion b { display: block; font-size: 14px; font-weight: 600; }
+  .suggestion span { font-size: 13px; color: var(--muted); }
+
+  .msg { display: flex; gap: 12px; margin: 0 0 22px; animation: rise 0.25s ease-out; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .msg.user { justify-content: flex-end; }
+  .msg.user .bubble {
+    background: var(--user-bubble); color: var(--user-text);
+    padding: 10px 16px; border-radius: 18px 18px 4px 18px;
+    max-width: 78%; white-space: pre-wrap; word-wrap: break-word;
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 9px; flex: none; margin-top: 2px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; color: #fff;
+  }
+  .bot { flex: 1; min-width: 0; }
+  .answer { white-space: pre-wrap; word-wrap: break-word; padding-top: 4px; }
+  .cite {
+    display: inline-grid; place-items: center;
+    min-width: 20px; height: 20px; padding: 0 5px; margin: 0 1px;
+    border-radius: 6px; border: 0; cursor: pointer;
+    background: var(--accent-soft); color: var(--accent-text);
+    font-size: 11.5px; font-weight: 600; vertical-align: 2px; line-height: 1;
+  }
+  .cite:hover { background: var(--accent); color: #fff; }
+
+  .sources-label { margin: 14px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+  .sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+  .source {
+    text-align: left; cursor: pointer; padding: 10px 12px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--surface);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.3s;
+  }
+  .source:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+  .source.used { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+  .source.flash { background: var(--accent-soft); }
+  .source-head { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; }
+  .source-head .num { color: var(--accent-text); }
+  .source-head .file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .source-title { margin-top: 4px; font-size: 13px; font-weight: 500; }
+  .source p {
+    margin: 4px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--muted);
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    white-space: pre-wrap;
+  }
+  .source.open { grid-column: 1 / -1; }
+  .source.open p { -webkit-line-clamp: unset; }
+  .match { margin-left: auto; font-weight: 500; font-size: 11px; color: var(--faint); }
+
+  .thinking { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; padding-top: 5px; }
+  .dots { display: inline-flex; gap: 4px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s infinite ease-in-out; }
+  .dots i:nth-child(2) { animation-delay: 0.15s; }
+  .dots i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce { 0%, 80%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }
+
+  .error {
+    padding: 10px 14px; border-radius: 12px; font-size: 14px;
+    background: var(--danger-soft); color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  }
+  .meta { margin-top: 8px; font-size: 12px; color: var(--faint); }
+
+  /* ---------- Composer ---------- */
+  footer { padding: 0 20px 18px; }
+  .composer {
+    max-width: 800px; margin: 0 auto;
+    display: flex; align-items: flex-end; gap: 8px;
+    padding: 8px 8px 8px 16px; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .composer:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+    box-shadow: var(--shadow), 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  textarea {
+    flex: 1; resize: none; border: 0; outline: none; background: transparent;
+    padding: 8px 0; max-height: 160px; line-height: 1.5;
+  }
+  textarea::placeholder { color: var(--faint); }
+  .send {
+    width: 38px; height: 38px; border-radius: 12px; border: 0; flex: none; cursor: pointer;
+    display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .send:hover { transform: scale(1.05); }
+  .send:disabled { opacity: 0.35; cursor: default; transform: none; }
+  .hint { max-width: 800px; margin: 8px auto 0; text-align: center; font-size: 12px; color: var(--faint); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 110px; transform: translate(-50%, 10px);
+    padding: 10px 16px; border-radius: 12px; font-size: 14px;
+    background: var(--text); color: var(--bg); box-shadow: var(--shadow);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 640px) {
+    header { padding: 10px 16px; gap: 8px; }
+    .brand span, .btn .label, #model-pill { display: none; }
+    .column { padding: 18px 16px 24px; }
+    .suggestions { grid-template-columns: 1fr; }
+    .empty { padding-top: 4vh; }
+    .empty h1 { font-size: 24px; }
+    footer { padding: 0 12px 12px; }
+    .msg.user .bubble { max-width: 88%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
+  </div>
+  <div class="brand">
+    <b>Docs Copilot</b>
+    <span>Answers grounded in your help docs</span>
+  </div>
+  <div class="spacer"></div>
+  <span class="pill" id="model-pill" title="Language model"><span class="dot" id="model-dot"></span><span id="model-name">Connecting…</span></span>
+  <label class="pill ws" title="Workspace (one per customer)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    <input id="ws" value="brightwave" aria-label="Workspace" spellcheck="false">
+  </label>
+  <button class="btn" id="upload-btn" title="Add a .md, .txt or .pdf file to this workspace">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></svg>
+    <span class="label">Add docs</span>
+  </button>
+  <input type="file" id="file" accept=".md,.txt,.pdf" hidden>
+</header>
+
+<div id="scroller">
+  <div class="column" id="log">
+    <section class="empty" id="empty">
+      <div class="logo" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+      </div>
+      <h1>How can I help?</h1>
+      <p id="empty-sub">Ask anything about the loaded docs. Every answer cites its sources, and I'll tell you when the docs don't cover it.</p>
+      <div class="suggestions">
+        <button class="suggestion" data-q="When is my monthly bill due, and is there a late fee?"><b>Billing</b><span>When is my bill due, and is there a late fee?</span></button>
+        <button class="suggestion" data-q="My router light is blinking amber. What does that mean?"><b>Troubleshooting</b><span>My router light is blinking amber.</span></button>
+        <button class="suggestion" data-q="How fast is the Plus plan and what does it cost?"><b>Plans</b><span>How fast is the Plus plan, and what does it cost?</span></button>
+        <button class="suggestion" data-q="Do I have to pay a fee to cancel?"><b>Cancellation</b><span>Do I have to pay a fee to cancel?</span></button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer>
+  <form class="composer" id="form">
+    <textarea id="q" rows="1" placeholder="Ask a question…" aria-label="Question"></textarea>
+    <button class="send" id="send" aria-label="Send" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+  </form>
+  <div class="hint">Enter to send · Shift+Enter for a new line · Answers come only from your loaded docs</div>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const log = $("log"), form = $("form"), q = $("q"), send = $("send"), ws = $("ws"), scroller = $("scroller");
+  let busy = false;
+
+  const BOT_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>';
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function scrollDown() {
+    scroller.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
+  }
+
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove("show"), 3000);
+  }
+
+  // Turn the answer text into nodes: **bold** becomes <strong>, [n] becomes a clickable citation chip.
+  function renderAnswer(text, sourceCards) {
+    const frag = document.createDocumentFragment();
+    const used = new Set();
+    for (const part of text.split(/(\*\*[^*]+\*\*|\[\d+\])/g)) {
+      if (!part) continue;
+      const cite = part.match(/^\[(\d+)\]$/);
+      if (cite && sourceCards[cite[1]]) {
+        const n = cite[1];
+        used.add(n);
+        const b = el("button", "cite", n);
+        b.title = "Show source " + n;
+        b.onclick = () => {
+          const card = sourceCards[n];
+          card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          card.classList.add("flash");
+          setTimeout(() => card.classList.remove("flash"), 900);
+        };
+        frag.append(b);
+      } else if (/^\*\*[^*]+\*\*$/.test(part)) {
+        frag.append(el("strong", null, part.slice(2, -2)));
+      } else {
+        frag.append(document.createTextNode(part));
+      }
+    }
+    for (const n of used) sourceCards[n].classList.add("used");
+    return frag;
+  }
+
+  function addUser(text) {
+    $("empty")?.remove();
+    const row = el("div", "msg user");
+    row.append(el("div", "bubble", text));
+    log.append(row);
+    scrollDown();
+  }
+
+  function addBot() {
+    const row = el("div", "msg");
+    const avatar = el("div", "avatar");
+    avatar.innerHTML = BOT_ICON;
+    const bot = el("div", "bot");
+    const thinking = el("div", "thinking");
+    thinking.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
+    thinking.append(el("span", null, "Searching the docs…"));
+    bot.append(thinking);
+    row.append(avatar, bot);
+    log.append(row);
+    scrollDown();
+    // After a few seconds the model is writing; update the label so it doesn't feel stuck.
+    const timer = setTimeout(() => (thinking.lastChild.textContent = "Writing an answer…"), 2500);
+    return { bot, done: () => clearTimeout(timer) };
+  }
+
+  function showAnswer(bot, data, seconds) {
+    bot.replaceChildren();
+    const sourceCards = {};
+    const grid = el("div", "sources");
+    for (const s of data.sources) {
+      const card = el("button", "source");
+      const head = el("div", "source-head");
+      head.append(el("span", "num", s.n), el("span", "file", s.source));
+      // Chroma distance: lower = closer. Turn it into a rough 0-100% "match" for display.
+      const match = Math.max(0, Math.min(100, Math.round((1 - s.distance / 2) * 100)));
+      head.append(el("span", "match", match + "%"));
+      // Split "## Heading\n\nbody" into a title line and a compact one-paragraph preview.
+      const lines = s.text.split("\n");
+      const title = lines[0].startsWith("#") ? lines.shift().replace(/^#+\s*/, "") : "";
+      const body = lines.join("\n").trim();
+      const preview = body.replace(/\s*\n\s*/g, " ");
+      if (title) card.append(head, el("div", "source-title", title));
+      else card.append(head);
+      const p = el("p", null, preview);
+      card.append(p);
+      card.title = "Click to expand";
+      card.onclick = () => {
+        const open = card.classList.toggle("open");
+        p.textContent = open ? body : preview;
+      };
+      sourceCards[s.n] = card;
+      grid.append(card);
+    }
+    const answer = el("div", "answer");
+    answer.append(renderAnswer(data.answer, sourceCards));
+    bot.append(answer);
+    if (data.sources.length) {
+      bot.append(el("div", "sources-label", "Sources"), grid);
+    }
+    bot.append(el("div", "meta", `Answered in ${seconds}s`));
+  }
+
+  function showError(bot, message) {
+    bot.replaceChildren(el("div", "error", message));
+  }
+
+  async function ask(question) {
+    if (busy || !question.trim()) return;
+    busy = true;
+    updateSend();
+    addUser(question);
+    const { bot, done } = addBot();
+    const start = performance.now();
+    try {
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, workspace: ws.value.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) showError(bot, data.detail || `Request failed (${res.status})`);
+      else showAnswer(bot, data, ((performance.now() - start) / 1000).toFixed(1));
+    } catch (err) {
+      showError(bot, "Could not reach the server. Is uvicorn still running?");
+    } finally {
+      done();
+      busy = false;
+      updateSend();
+      scrollDown();
+      q.focus();
+    }
+  }
+
+  function updateSend() {
+    send.disabled = busy || !q.value.trim();
+  }
+
+  function autoGrow() {
+    q.style.height = "auto";
+    q.style.height = Math.min(q.scrollHeight, 160) + "px";
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = q.value;
+    q.value = "";
+    autoGrow();
+    ask(text);
+  });
+  q.addEventListener("input", () => { autoGrow(); updateSend(); });
+  q.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+  document.querySelectorAll(".suggestion").forEach((b) => (b.onclick = () => ask(b.dataset.q)));
+
+  // Header: model status
+  fetch("/health").then((r) => r.json()).then((h) => {
+    $("model-name").textContent = h.provider === "ollama" ? `${h.model} · local` : h.model;
+    $("model-dot").classList.add("ok");
+  }).catch(() => ($("model-name").textContent = "Offline"));
+
+  // Workspace: show how many docs are loaded
+  async function loadWorkspace() {
+    const name = ws.value.trim();
+    const sub = $("empty-sub");
+    try {
+      const res = await fetch(`/workspaces/${encodeURIComponent(name)}`);
+      const info = await res.json();
+      if (!res.ok) return toast(info.detail || "Invalid workspace name");
+      const files = Object.keys(info.files).length;
+      if (sub) {
+        sub.textContent = files
+          ? `${files} documents loaded in “${name}”. Every answer cites its sources, and I'll tell you when the docs don't cover it.`
+          : `No documents in “${name}” yet. Use “Add docs” to upload a .md, .txt or .pdf file.`;
+      }
+    } catch {}
+  }
+  ws.addEventListener("change", loadWorkspace);
+  loadWorkspace();
+
+  // Upload docs
+  $("upload-btn").onclick = () => $("file").click();
+  $("file").onchange = async () => {
+    const file = $("file").files[0];
+    if (!file) return;
+    const body = new FormData();
+    body.append("file", file);
+    body.append("workspace", ws.value.trim());
+    toast(`Uploading ${file.name}…`);
+    try {
+      const res = await fetch("/ingest", { method: "POST", body });
+      const data = await res.json();
+      if (res.ok) {
+        toast(`Added ${data.file} · ${data.chunks} chunks`);
+        loadWorkspace();
+      } else toast(data.detail || "Upload failed");
+    } catch {
+      toast("Upload failed: server not reachable");
+    }
+    $("file").value = "";
+  };
+
+  q.focus();
+</script>
+</body>
+</html>
